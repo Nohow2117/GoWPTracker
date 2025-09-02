@@ -12,6 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.0] – 2025-09-02
+### Security & Fix
+- Blocco richieste HEAD e bot su endpoint `/go` (403 Forbidden, logging).
+- Rewrite rule aggiornata a `^go/?$` per compatibilità `/go` e `/go/`.
+- Hook `template_redirect` ora a priorità 9 (prima di redirect_canonical).
+- Tutti gli input (`dest`, UTM, PLP) ora vengono sanificati lato backend.
+- L'indirizzo IP viene salvato in formato binario nella tabella DB.
+- Test di sicurezza e regressione superati (vedi roadmap e logs).
+
+---
+
 ## [0.1.0] – YYYY-MM-DD
 ### Added
 - Basic `/go` redirect endpoint.
