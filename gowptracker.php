@@ -15,6 +15,55 @@ if ( ! defined( 'ABSPATH' ) ) {
 class GoWPTracker {
     public function __construct() {
         add_action( 'init', [ $this, 'register_go_endpoint' ] );
+        add_action( 'admin_menu', [ $this, 'add_admin_page' ] );
+    }
+
+    public function add_admin_page() {
+        add_menu_page(
+            'GO Tracker',
+            'GO Tracker',
+            'manage_options',
+            'gowptracker-admin',
+            [ $this, 'render_admin_page' ],
+            'dashicons-chart-bar',
+            80
+        );
+    }
+
+    public function render_admin_page() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'go_clicks';
+        $since = date('Y-m-d H:i:s', strtotime('-7 days'));
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT referrer, utm_campaign FROM $table WHERE ts >= %s",
+                $since
+            ),
+            ARRAY_A
+        );
+        // Raggruppa per percorso referrer e campagna
+        $agg = [];
+        foreach ($rows as $row) {
+            $ref = $row['referrer'];
+            $parsed = wp_parse_url($ref);
+            $plp_path = isset($parsed['path']) ? $parsed['path'] : '(nessun referrer)';
+            $camp = $row['utm_campaign'];
+            $key = $plp_path . '|' . $camp;
+            if (!isset($agg[$key])) {
+                $agg[$key] = ['plp' => $plp_path, 'utm_campaign' => $camp, 'clicks' => 0];
+            }
+            $agg[$key]['clicks']++;
+        }
+        echo '<div class="wrap"><h1>GO Tracker – Clicks ultimi 7 giorni</h1>';
+        echo '<table class="widefat"><thead><tr><th>PLP (da referrer)</th><th>Campagna</th><th>Clicks</th></tr></thead><tbody>';
+        if ($agg) {
+            foreach ($agg as $row) {
+                echo '<tr><td>' . esc_html($row['plp']) . '</td><td>' . esc_html($row['utm_campaign']) . '</td><td>' . intval($row['clicks']) . '</td></tr>';
+            }
+        } else {
+            echo '<tr><td colspan="3">Nessun dato</td></tr>';
+        }
+        echo '</tbody></table></div>';
     }
 
     public static function activate_plugin() {
@@ -73,17 +122,30 @@ class GoWPTracker {
                 wp_die('Errore: parametro dest mancante.');
             }
             $parsed = wp_parse_url($dest);
-            $host = isset($parsed['host']) ? $parsed['host'] : '';
+            $host = isset($parsed['host']) ? sanitize_text_field($parsed['host']) : '';
             if (!in_array($host, $allowed_domains, true)) {
                 wp_die('Dominio di destinazione non consentito.');
+            }
+            // Blocca richieste HEAD e bot
+            if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {
+                status_header(403);
+                exit('Forbidden');
+            }
+            $ua_check = isset($_SERVER['HTTP_USER_AGENT']) ? strtolower($_SERVER['HTTP_USER_AGENT']) : '';
+            $bot_signals = ['bot','crawl','spider','slurp','facebookexternalhit','mediapartners-google','adsbot','bingpreview'];
+            foreach ($bot_signals as $signal) {
+                if (strpos($ua_check, $signal) !== false) {
+                    status_header(403);
+                    exit('Forbidden');
+                }
             }
             // Logging del click
             global $wpdb;
             $table = $wpdb->prefix . 'go_clicks';
             $ts = current_time('mysql');
-            $ip = isset($_SERVER['REMOTE_ADDR']) ? inet_pton($_SERVER['REMOTE_ADDR']) : null;
-            $ua = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
-            $referrer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+            $ip = isset($_SERVER['REMOTE_ADDR']) ? inet_pton(sanitize_text_field($_SERVER['REMOTE_ADDR'])) : null;
+            $ua = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field($_SERVER['HTTP_USER_AGENT']) : '';
+            $referrer = isset($_SERVER['HTTP_REFERER']) ? esc_url_raw($_SERVER['HTTP_REFERER']) : '';
             $dest_host = $host;
             $plp = isset($_GET['plp']) ? sanitize_text_field($_GET['plp']) : '';
             $utm_source = isset($_GET['utm_source']) ? sanitize_text_field($_GET['utm_source']) : '';
