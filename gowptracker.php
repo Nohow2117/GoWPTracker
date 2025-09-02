@@ -18,10 +18,13 @@ class GoWPTracker {
     }
 
     public static function activate_plugin() {
+        error_log('GoWPTracker: activate_plugin START');
         global $wpdb;
         $table_name = $wpdb->prefix . 'go_clicks';
         $charset_collate = $wpdb->get_charset_collate();
+        error_log('GoWPTracker: before require_once');
         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+        error_log('GoWPTracker: after require_once');
         $sql = "CREATE TABLE $table_name (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             ts DATETIME NOT NULL,
@@ -43,10 +46,14 @@ class GoWPTracker {
             KEY idx_plp (plp),
             KEY idx_dest_host (dest_host)
         ) $charset_collate;";
-        dbDelta($sql);
-    }
-    public function __construct() {
-        add_action( 'init', [ $this, 'register_go_endpoint' ] );
+        error_log('GoWPTracker: before dbDelta');
+        try {
+            dbDelta($sql);
+            error_log('GoWPTracker: after dbDelta');
+        } catch (Exception $e) {
+            error_log('GoWPTracker: EXCEPTION - ' . $e->getMessage());
+        }
+        error_log('GoWPTracker: activate_plugin END');
     }
 
     public function register_go_endpoint() {
@@ -69,6 +76,76 @@ class GoWPTracker {
             $host = isset($parsed['host']) ? $parsed['host'] : '';
             if (!in_array($host, $allowed_domains, true)) {
                 wp_die('Dominio di destinazione non consentito.');
+            }
+            // Logging del click
+            global $wpdb;
+            $table = $wpdb->prefix . 'go_clicks';
+            $ts = current_time('mysql');
+            $ip = isset($_SERVER['REMOTE_ADDR']) ? inet_pton($_SERVER['REMOTE_ADDR']) : null;
+            $ua = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
+            $referrer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+            $dest_host = $host;
+            $plp = isset($_GET['plp']) ? sanitize_text_field($_GET['plp']) : '';
+            $utm_source = isset($_GET['utm_source']) ? sanitize_text_field($_GET['utm_source']) : '';
+            $utm_medium = isset($_GET['utm_medium']) ? sanitize_text_field($_GET['utm_medium']) : '';
+            $utm_campaign = isset($_GET['utm_campaign']) ? sanitize_text_field($_GET['utm_campaign']) : '';
+            $utm_content = isset($_GET['utm_content']) ? sanitize_text_field($_GET['utm_content']) : '';
+            $utm_term = isset($_GET['utm_term']) ? sanitize_text_field($_GET['utm_term']) : '';
+            $fbclid = isset($_GET['fbclid']) ? sanitize_text_field($_GET['fbclid']) : '';
+            $gclid = isset($_GET['gclid']) ? sanitize_text_field($_GET['gclid']) : '';
+            $wpdb->insert(
+                $table,
+                [
+                    'ts' => $ts,
+                    'ip' => $ip,
+                    'ua' => $ua,
+                    'referrer' => $referrer,
+                    'dest' => $dest,
+                    'dest_host' => $dest_host,
+                    'plp' => $plp,
+                    'utm_source' => $utm_source,
+                    'utm_medium' => $utm_medium,
+                    'utm_campaign' => $utm_campaign,
+                    'utm_content' => $utm_content,
+                    'utm_term' => $utm_term,
+                    'fbclid' => $fbclid,
+                    'gclid' => $gclid,
+                ],
+                [
+                    '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s'
+                ]
+            );
+            // Propagazione automatica UTM e PLP
+            $params_to_propagate = [
+                'plp',
+                'utm_source',
+                'utm_medium',
+                'utm_campaign',
+                'utm_content',
+                'utm_term',
+                'fbclid',
+                'gclid'
+            ];
+            $query = [];
+            foreach ($params_to_propagate as $k) {
+                if (!empty($_GET[$k])) {
+                    $query[$k] = sanitize_text_field($_GET[$k]);
+                }
+            }
+            if (!empty($query)) {
+                $parsed_dest = wp_parse_url($dest);
+                $dest_query = [];
+                if (isset($parsed_dest['query'])) {
+                    parse_str($parsed_dest['query'], $dest_query);
+                }
+                $merged_query = array_merge($dest_query, $query);
+                $query_str = http_build_query($merged_query);
+                $base = $parsed_dest['scheme'] . '://' . $parsed_dest['host'];
+                if (isset($parsed_dest['port'])) {
+                    $base .= ':' . $parsed_dest['port'];
+                }
+                $base .= isset($parsed_dest['path']) ? $parsed_dest['path'] : '';
+                $dest = $base . '?' . $query_str;
             }
             // Redirect 302 verso la destinazione
             wp_redirect($dest, 302);
