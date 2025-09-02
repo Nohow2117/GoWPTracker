@@ -45,8 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [0.3.0] – YYYY-MM-DD
+## [0.3.0] – 2025-09-02
+### Added
+- CSV export of clicks (dashboard, Step 8 roadmap).
+- Chart visualization of click performance (dashboard, Step 8 roadmap).
+- Test: Export and chart match DB values (manual verification, Step 8 roadmap).
+
 ### Planned
-- CSV export of clicks.
-- Chart visualization of click performance.
 - Webhooks for real-time analytics integrations.
