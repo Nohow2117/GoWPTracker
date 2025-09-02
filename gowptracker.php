@@ -25,8 +25,22 @@ class GoWPTracker {
 
     public function handle_go_redirect() {
         if ( get_query_var( 'gowptracker_go' ) ) {
-            // Qui andrà la logica di validazione, logging e redirect
-            wp_die( 'GoWPTracker: endpoint /go attivo. Implementazione in corso.' );
+            $allowed_domains = [
+                'milano-bags.com',
+                // aggiungi altri domini consentiti qui
+            ];
+            $dest = isset($_GET['dest']) ? esc_url_raw($_GET['dest']) : '';
+            if (empty($dest)) {
+                wp_die('Errore: parametro dest mancante.');
+            }
+            $parsed = wp_parse_url($dest);
+            $host = isset($parsed['host']) ? $parsed['host'] : '';
+            if (!in_array($host, $allowed_domains, true)) {
+                wp_die('Dominio di destinazione non consentito.');
+            }
+            // Redirect 302 verso la destinazione
+            wp_redirect($dest, 302);
+            exit;
         }
     }
 }
