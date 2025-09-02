@@ -14,6 +14,39 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Main plugin class
 class GoWPTracker {
     public function __construct() {
+        register_activation_hook(__FILE__, [ $this, 'activate_plugin' ] );
+        add_action( 'init', [ $this, 'register_go_endpoint' ] );
+    }
+
+    public function activate_plugin() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'go_clicks';
+        $charset_collate = $wpdb->get_charset_collate();
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+        $sql = "CREATE TABLE $table_name (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            ts DATETIME NOT NULL,
+            ip VARBINARY(16) NOT NULL,
+            ua TEXT,
+            referrer TEXT,
+            dest TEXT,
+            dest_host VARCHAR(191),
+            plp VARCHAR(191),
+            utm_source VARCHAR(191),
+            utm_medium VARCHAR(191),
+            utm_campaign VARCHAR(191),
+            utm_content VARCHAR(191),
+            utm_term VARCHAR(191),
+            fbclid VARCHAR(191),
+            gclid VARCHAR(191),
+            PRIMARY KEY (id),
+            KEY idx_ts (ts),
+            KEY idx_plp (plp),
+            KEY idx_dest_host (dest_host)
+        ) $charset_collate;";
+        dbDelta($sql);
+    }
+    public function __construct() {
         add_action( 'init', [ $this, 'register_go_endpoint' ] );
     }
 
