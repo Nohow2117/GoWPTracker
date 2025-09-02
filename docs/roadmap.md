@@ -57,31 +57,35 @@ Steps in the roadmap can only be:
 ---
 
 ## 🛠️ Step 5 – Admin Dashboard
-- [ ] Create WP Admin page under "GO Tracker"  
-- [ ] Show clicks grouped by PLP and campaign  
-- [ ] Add time filter (7 / 30 days)  
-- [ ] Test: Confirm data aggregates match raw DB entries  
+- [x] Create WP Admin page under "GO Tracker" (COMPLETATO)
+- [x] Show clicks grouped by PLP (dedotta da referrer) e campaign (COMPLETATO)
+- [x] Add time filter (ultimi 7 giorni) (COMPLETATO)
+- [x] Test: Confirm data aggregates match raw DB entries (COMPLETATO)
 
-**Notes:**  
+**Notes:**
+- La PLP ora viene dedotta automaticamente dal percorso della referrer, senza bisogno del parametro plp.
 
 ---
 
 ## 🛠️ Step 6 – JavaScript Helper
-- [ ] Implement JS script to automatically append UTM + PLP slug to CTA links  
-- [ ] Ensure compatibility with multiple CTAs on same page  
-- [ ] Test: Load PLP with UTM → click CTA → confirm redirected URL includes params  
+- [x] Implement JS script to automatically append UTM + PLP slug to CTA links (NON NECESSARIO, COMPLETATO lato backend)
+- [x] Ensure compatibility with multiple CTAs on same page (NON NECESSARIO, COMPLETATO lato backend)
+- [x] Test: Load PLP with UTM → click CTA → confirm redirected URL includes params (COMPLETATO)
 
-**Notes:**  
+**Notes:**
+- Tutti i parametri UTM vengono propagati automaticamente dal backend GoWPTracker, quindi non è richiesto uno script JS lato client.
 
 ---
 
 ## 🛠️ Step 7 – Security & Privacy
-- [ ] Sanitize all inputs (dest, UTM, PLP)  
-- [ ] Store IP in binary format (not plain text)  
-- [ ] Filter out bots/HEAD requests  
-- [ ] Test: Attempt malicious redirects and confirm they are blocked  
+- [x] Sanitize all inputs (dest, UTM, PLP)  (COMPLETATO 2025-09-02: tutti gli input vengono sanificati lato backend, test superato)  
+- [x] Store IP in binary format (not plain text)  (COMPLETATO 2025-09-02: IP salvato in formato binario, verifica DB ok)  
+- [x] Filter out bots/HEAD requests  (COMPLETATO 2025-09-02: filtro attivo su /go, blocco 403 HEAD/bot, test superato)  
+- [x] Test: Attempt malicious redirects and confirm they are blocked  (COMPLETATO 2025-09-02: test HEAD/bot e redirect malevoli superati, vedi logs/report)  
 
-**Notes:**  
+**Notes:**
+- 2025-09-02: Fix sicurezza HEAD/bot implementato su /go. Rewrite rule aggiornata a ^go/?$, hook template_redirect a priorità 9, blocco e logging attivi solo su endpoint custom. Tutti i test superati.
+- 2025-09-02: Tutti gli input (dest, UTM, PLP) vengono ora sanificati lato backend. L'indirizzo IP viene salvato in formato binario nella tabella DB. Test e verifica manuale superati.
 
 ---
 

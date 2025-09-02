@@ -106,13 +106,32 @@ class GoWPTracker {
     }
 
     public function register_go_endpoint() {
-        add_rewrite_rule( '^go$', 'index.php?gowptracker_go=1', 'top' );
+        add_rewrite_rule( '^go/?$', 'index.php?gowptracker_go=1', 'top' );
         add_rewrite_tag( '%gowptracker_go%', '1' );
-        add_action( 'template_redirect', [ $this, 'handle_go_redirect' ] );
+        add_action( 'template_redirect', [ $this, 'handle_go_redirect' ], 9 );
     }
 
     public function handle_go_redirect() {
+        // DEBUG: logga tutto ciò che arriva
+        error_log('REQUEST_URI: ' . $_SERVER['REQUEST_URI']);
+        error_log('QUERY_STRING: ' . $_SERVER['QUERY_STRING']);
+        error_log('GET: ' . print_r($_GET, true));
         if ( get_query_var( 'gowptracker_go' ) ) {
+            // Blocca richieste HEAD e bot PRIMA di ogni logica
+            if ($_SERVER['REQUEST_METHOD'] === 'HEAD') {
+                error_log('GoWPTracker: BLOCCO HEAD');
+                status_header(403);
+                exit('Forbidden');
+            }
+            $ua_check = isset($_SERVER['HTTP_USER_AGENT']) ? strtolower($_SERVER['HTTP_USER_AGENT']) : '';
+            $bot_signals = ['bot','crawl','spider','slurp','facebookexternalhit','mediapartners-google','adsbot','bingpreview'];
+            foreach ($bot_signals as $signal) {
+                if (strpos($ua_check, $signal) !== false) {
+                    error_log('GoWPTracker: BLOCCO BOT - UA: ' . $ua_check);
+                    status_header(403);
+                    exit('Forbidden');
+                }
+            }
             $allowed_domains = [
                 'milano-bags.com',
                 // aggiungi altri domini consentiti qui
@@ -122,7 +141,23 @@ class GoWPTracker {
                 wp_die('Errore: parametro dest mancante.');
             }
             $parsed = wp_parse_url($dest);
+            $scheme = isset($parsed['scheme']) ? strtolower($parsed['scheme']) : '';
+            if ($scheme !== 'http' && $scheme !== 'https') {
+                wp_die('Protocollo di destinazione non consentito.');
+            }
             $host = isset($parsed['host']) ? sanitize_text_field($parsed['host']) : '';
+            // Blocca destinazioni pericolose: IP, localhost, reti locali
+            if (
+                $host === 'localhost' ||
+                filter_var($host, FILTER_VALIDATE_IP) && (
+                    preg_match('/^127\./', $host) || // loopback IPv4
+                    preg_match('/^10\./', $host) ||   // privato IPv4
+                    preg_match('/^192\.168\./', $host) || // privato IPv4
+                    preg_match('/^172\.(1[6-9]|2[0-9]|3[0-1])\./', $host) // privato IPv4
+                )
+            ) {
+                wp_die('Destinazione IP/localhost/rete privata non consentita.');
+            }
             if (!in_array($host, $allowed_domains, true)) {
                 wp_die('Dominio di destinazione non consentito.');
             }
