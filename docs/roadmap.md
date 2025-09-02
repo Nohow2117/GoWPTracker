@@ -28,7 +28,7 @@ Steps in the roadmap can only be:
 - [x] Implementazione whitelist domini consentiti nell'endpoint /go (hardcoded) (COMPLETATO)
 - [x] Implementazione redirect 302 verso la destinazione se valida, errore se non valida (COMPLETATO)
 - [x] Logging click su redirect /go nella tabella wp_go_clicks (COMPLETATO)
-- [ ] Test: Verify redirect works with a valid `dest` and blocks invalid domains  
+- [x] Test: Verify redirect works with a valid `dest` and blocks invalid domains  (COMPLETATO 2025-09-02: test manuale redirect e blocco domini non validi)  
 
 **Notes:**  
 
@@ -90,9 +90,9 @@ Steps in the roadmap can only be:
 ---
 
 ## 🛠️ Step 8 – Reporting Enhancements
-- [ ] Add CSV export  
-- [ ] Add chart visualization (clicks per PLP over time)  
-- [ ] Test: Export and chart match DB values  
+- [x] Add CSV export  (COMPLETATO 2025-09-02: funzione attiva in dashboard)
+- [x] Add chart visualization (clicks per PLP over time)  (COMPLETATO 2025-09-02: grafico a barre in dashboard)
+- [x] Test: Export and chart match DB values  (COMPLETATO 2025-09-02: verifica manuale, export CSV e chart corrispondono ai dati DB)  
 
 **Notes:**  
 
