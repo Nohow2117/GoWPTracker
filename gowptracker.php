@@ -14,11 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Main plugin class
 class GoWPTracker {
     public function __construct() {
-        register_activation_hook(__FILE__, [ $this, 'activate_plugin' ] );
         add_action( 'init', [ $this, 'register_go_endpoint' ] );
     }
 
-    public function activate_plugin() {
+    public static function activate_plugin() {
         global $wpdb;
         $table_name = $wpdb->prefix . 'go_clicks';
         $charset_collate = $wpdb->get_charset_collate();
@@ -79,3 +78,5 @@ class GoWPTracker {
 }
 
 new GoWPTracker();
+
+register_activation_hook(__FILE__, ['GoWPTracker', 'activate_plugin']);
