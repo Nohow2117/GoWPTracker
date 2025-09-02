@@ -29,6 +29,18 @@ Without tracking, you cannot know which PLP generates the most clicks to your st
 - Domain whitelist to prevent open redirects
 - Privacy-friendly: IP addresses stored in binary format, not plain text
 
+### Split Testing (PLP rotator)
+- Public endpoint: `/split/{slug}` with sticky assignment via cookie (30 days)
+- Weighted rotation across WordPress pages (variants)
+- Admin UI to create/edit tests:
+  - Up to 10 variants with dynamic add/remove
+  - Percent-based weights with "Equalize" button (sets each to floor(100/N))
+  - Slug immutable when editing existing tests
+  - Validation, nonce and capability checks
+- Reporting: clicks per test/variant with CSV export
+
+Read more in `docs/split-testing.md`.
+
 ---
 
 ## 🔧 Installation
