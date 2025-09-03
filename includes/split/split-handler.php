@@ -7,8 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Handles the /split/{slug} endpoint.
  *
- * It performs weighted rotation to a variant (WP Page), sets a sticky cookie,
- * logs the hit, and propagates query parameters.
+ * It performs weighted rotation to a variant (WP Page), logs the hit, and propagates query parameters.
  */
 function gowptracker_handle_split_redirect() {
     $slug = get_query_var('gowptracker_split');
@@ -50,40 +49,21 @@ function gowptracker_handle_split_redirect() {
         exit('No published variants available.');
     }
 
-    $choice = null;
-    $cookie_name = 'GoWPTrackerSplit_' . $slug;
-
-    // Check for a sticky assignment via cookie
-    if (isset($_COOKIE[$cookie_name])) {
-        $cookie_variant_id = absint($_COOKIE[$cookie_name]);
-        foreach ($valid_variants as $v) {
-            if (intval($v['id']) === $cookie_variant_id) {
-                $choice = $v; // Found a valid, sticky choice
-                break;
-            }
-        }
+    // Perform weighted rotation to select a variant.
+    $total_weight = 0;
+    foreach ($valid_variants as $v) {
+        $total_weight += max(1, intval($v['weight']));
     }
 
-    // If no valid cookie, perform weighted rotation
-    if ($choice === null) {
-        $total_weight = 0;
-        foreach ($valid_variants as $v) {
-            $total_weight += max(1, intval($v['weight']));
+    $r = mt_rand(1, $total_weight);
+    $acc = 0;
+    $choice = reset($valid_variants); // Default to the first variant.
+    foreach ($valid_variants as $v) {
+        $acc += max(1, intval($v['weight']));
+        if ($r <= $acc) {
+            $choice = $v;
+            break;
         }
-
-        $r = mt_rand(1, $total_weight);
-        $acc = 0;
-        $choice = $valid_variants[0]; // Default to first
-        foreach ($valid_variants as $v) {
-            $acc += max(1, intval($v['weight']));
-            if ($r <= $acc) {
-                $choice = $v;
-                break;
-            }
-        }
-        // Set a sticky cookie for 30 days
-        $expire = time() + MONTH_IN_SECONDS;
-        setcookie($cookie_name, strval(intval($choice['id'])), $expire, '/', '', is_ssl(), true);
     }
 
     $destination_post_id = intval($choice['post_id']);
