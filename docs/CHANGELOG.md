@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.7.0] – 2025-09-03
+### Added
+- **Reset Statistics**: Added a button to the split test report UI to reset the click statistics for a specific test.
+
+### Fixed
+- **Split Test Caching**: Resolved a browser caching issue on 302 redirects that prevented correct variant randomization on subsequent visits by adding cache-busting headers.
+
+---
+
 ## [0.6.0] – 2025-09-03
 ### Added
 - **Split Test Deletion**: Implemented the ability to delete split tests and their variants directly from the admin UI, including nonce protection.

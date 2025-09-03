@@ -107,6 +107,11 @@ function gowptracker_handle_split_redirect() {
         ['%s', '%s', '%d', '%s', '%s', '%s', '%s']
     );
 
+    // Add cache-busting headers to prevent browser caching of the 302 redirect.
+    header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+    header("Pragma: no-cache");
+    header("Expires: 0");
+
     wp_redirect($dest_url, 302);
     exit;
 }

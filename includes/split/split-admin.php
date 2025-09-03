@@ -4,6 +4,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Hook action handler to admin_init to ensure it runs before page render.
+add_action('admin_init', 'gowptracker_split_handle_actions');
+
 /**
  * Handles form submissions for creating/updating split tests.
  * This function is hooked into the 'load' action to process POST data before the page renders.
@@ -137,6 +140,23 @@ function gowptracker_split_handle_actions() {
         fclose($out);
         exit;
     }
+
+    // --- Handle Reset Statistics ---
+    if (isset($_POST['gowp_split_reset_stats']) && check_admin_referer('gowp_split_reset_nonce')) {
+        $reset_slug = isset($_POST['reset_slug']) ? sanitize_title($_POST['reset_slug']) : '';
+        if (!empty($reset_slug)) {
+            $split_hits_table = $wpdb->prefix . 'go_split_hits';
+            $deleted_rows = $wpdb->delete($split_hits_table, ['test_slug' => $reset_slug], ['%s']);
+            
+            // Add a transient to pass the debug message
+            if ($deleted_rows !== false) {
+                set_transient('gowp_split_reset_debug', 'Statistiche resettate. Righe eliminate: ' . $deleted_rows, 45);
+            }
+
+            wp_redirect(add_query_arg(['page' => 'gowptracker-split-tests', 'report_slug' => $reset_slug, 'message' => 'reset'], admin_url('admin.php')));
+            exit;
+        }
+    }
 }
 
 
@@ -159,7 +179,15 @@ function gowptracker_render_split_admin_page() {
         if ($_GET['message'] === 'created') $message = 'Split test creato correttamente.';
         if ($_GET['message'] === 'updated') $message = 'Split test aggiornato correttamente.';
         if ($_GET['message'] === 'deleted') $message = 'Split test eliminato correttamente.';
+        if ($_GET['message'] === 'reset') $message = 'Statistiche del test resettate correttamente.';
         if ($message) echo '<div class="notice notice-success"><p>' . esc_html($message) . '</p></div>';
+    }
+
+    // Check for and display the debug transient
+    $debug_message = get_transient('gowp_split_reset_debug');
+    if ($debug_message) {
+        echo '<script>console.log("GoWPTracker Debug: ' . esc_js($debug_message) . '");</script>';
+        delete_transient('gowp_split_reset_debug');
     }
 
     echo '<div class="wrap">';
@@ -357,12 +385,19 @@ function render_split_test_reports() {
             <?php endif; ?>
             </tbody>
         </table>
-        <form method="post" style="margin-top:1em;">
-            <?php wp_nonce_field('gowp_split_report_nonce'); ?>
-            <input type="hidden" name="report_slug" value="<?php echo esc_attr($selected_slug); ?>">
-            <input type="hidden" name="report_days" value="<?php echo esc_attr($selected_days); ?>">
-            <button type="submit" name="gowp_split_export_csv" class="button button-secondary">Esporta CSV</button>
-        </form>
+        <div style="margin-top:1em; display: flex; gap: 10px;">
+            <form method="post">
+                <?php wp_nonce_field('gowp_split_report_nonce'); ?>
+                <input type="hidden" name="report_slug" value="<?php echo esc_attr($selected_slug); ?>">
+                <input type="hidden" name="report_days" value="<?php echo esc_attr($selected_days); ?>">
+                <button type="submit" name="gowp_split_export_csv" class="button button-secondary">Esporta CSV</button>
+            </form>
+            <form method="post">
+                <?php wp_nonce_field('gowp_split_reset_nonce'); ?>
+                <input type="hidden" name="reset_slug" value="<?php echo esc_attr($selected_slug); ?>">
+                <button type="submit" name="gowp_split_reset_stats" class="button" style="color:#a00;" onclick="return confirm('Sei sicuro di voler resettare le statistiche per questo test? L\'azione è irreversibile.');">Resetta Statistiche</button>
+            </form>
+        </div>
     <?php endif; ?>
     <?php
 }
