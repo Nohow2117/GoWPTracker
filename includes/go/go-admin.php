@@ -72,26 +72,34 @@ function gowptracker_render_go_admin_page() {
     );
 
     // Aggregate data by PLP path and campaign
-    $agg = [];
+    $grouped_data = [];
     foreach ($rows as $row) {
         $ref = $row['referrer'];
         $parsed = wp_parse_url($ref);
         $plp_path = isset($parsed['path']) ? $parsed['path'] : '(unknown)';
         $camp = !empty($row['utm_campaign']) ? $row['utm_campaign'] : '(none)';
-        $key = $plp_path . '|' . $camp;
-        if (!isset($agg[$key])) {
-            $agg[$key] = ['plp' => $plp_path, 'utm_campaign' => $camp, 'clicks' => 0];
+
+        if (!isset($grouped_data[$plp_path])) {
+            $grouped_data[$plp_path] = ['total_clicks' => 0, 'campaigns' => []];
         }
-        $agg[$key]['clicks']++;
+
+        if (!isset($grouped_data[$plp_path]['campaigns'][$camp])) {
+            $grouped_data[$plp_path]['campaigns'][$camp] = 0;
+        }
+
+        $grouped_data[$plp_path]['total_clicks']++;
+        $grouped_data[$plp_path]['campaigns'][$camp]++;
     }
-    arsort($agg);
+
+    // Sort PLPs by total clicks, descending
+    uasort($grouped_data, function($a, $b) {
+        return $b['total_clicks'] <=> $a['total_clicks'];
+    });
 
     // Prepare data for the chart (aggregated by PLP only)
     $plp_counts = [];
-    foreach ($agg as $row) {
-        $plp = $row['plp'];
-        if (!isset($plp_counts[$plp])) $plp_counts[$plp] = 0;
-        $plp_counts[$plp] += $row['clicks'];
+    foreach ($grouped_data as $plp => $data) {
+        $plp_counts[$plp] = $data['total_clicks'];
     }
     ?>
     <div class="wrap">
@@ -108,21 +116,28 @@ function gowptracker_render_go_admin_page() {
                     <thead>
                         <tr>
                             <th>PLP (from Referrer)</th>
-                            <th>Campaign</th>
-                            <th>Clicks</th>
+                            <th>Total Clicks</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if ($agg): ?>
-                            <?php foreach ($agg as $row): ?>
-                                <tr>
-                                    <td><?php echo esc_html($row['plp']); ?></td>
-                                    <td><?php echo esc_html($row['utm_campaign']); ?></td>
-                                    <td><?php echo intval($row['clicks']); ?></td>
+                        <?php if ($grouped_data): ?>
+                            <?php foreach ($grouped_data as $plp => $data): ?>
+                                <tr class="gowp-plp-row" style="cursor:pointer;" data-plp-id="<?php echo esc_attr(sanitize_title($plp)); ?>">
+                                    <td><strong><?php echo esc_html($plp); ?></strong></td>
+                                    <td><strong><?php echo intval($data['total_clicks']); ?></strong></td>
                                 </tr>
+                                <?php
+                                // Sort campaigns by clicks
+                                arsort($data['campaigns']);
+                                foreach ($data['campaigns'] as $campaign => $clicks): ?>
+                                    <tr class="gowp-campaign-row gowp-plp-<?php echo esc_attr(sanitize_title($plp)); ?>" style="display:none; background-color:#f9f9f9;">
+                                        <td style="padding-left:30px;"><?php echo esc_html($campaign); ?></td>
+                                        <td><?php echo intval($clicks); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="3">No data available.</td></tr>
+                            <tr><td colspan="2">No data available.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -137,6 +152,7 @@ function gowptracker_render_go_admin_page() {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Chart.js logic
         var ctx = document.getElementById("gowptracker_chart").getContext("2d");
         new Chart(ctx, {
             type: "bar",
@@ -160,6 +176,16 @@ function gowptracker_render_go_admin_page() {
                     }
                 }
             }
+        });
+
+        // Accordion logic for the table
+        document.querySelectorAll('.gowp-plp-row').forEach(row => {
+            row.addEventListener('click', () => {
+                const plpId = row.dataset.plpId;
+                document.querySelectorAll(`.gowp-plp-${plpId}`).forEach(campaignRow => {
+                    campaignRow.style.display = campaignRow.style.display === 'none' ? 'table-row' : 'none';
+                });
+            });
         });
     });
     </script>
