@@ -94,6 +94,17 @@ function gowptracker_split_handle_actions() {
         }
     }
 
+    // --- Handle Delete ---
+    if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['test_id'])) {
+        $test_id = absint($_GET['test_id']);
+        if ($test_id > 0 && check_admin_referer('gowp_delete_split_test_' . $test_id)) {
+            $wpdb->delete($tests_table, ['id' => $test_id], ['%d']);
+            $wpdb->delete($variants_table, ['test_id' => $test_id], ['%d']);
+            wp_redirect(add_query_arg(['page' => 'gowptracker-split-tests', 'message' => 'deleted'], admin_url('admin.php')));
+            exit;
+        }
+    }
+
     // --- Handle CSV Export ---
     if (isset($_POST['gowp_split_export_csv']) && check_admin_referer('gowp_split_report_nonce')) {
         $report_slug = isset($_POST['report_slug']) ? sanitize_title($_POST['report_slug']) : '';
@@ -147,6 +158,7 @@ function gowptracker_render_split_admin_page() {
         $message = '';
         if ($_GET['message'] === 'created') $message = 'Split test creato correttamente.';
         if ($_GET['message'] === 'updated') $message = 'Split test aggiornato correttamente.';
+        if ($_GET['message'] === 'deleted') $message = 'Split test eliminato correttamente.';
         if ($message) echo '<div class="notice notice-success"><p>' . esc_html($message) . '</p></div>';
     }
 
@@ -191,7 +203,13 @@ function render_split_tests_list() {
                     <td><?php echo $t['status'] ? 'Attivo' : 'Disattivo'; ?></td>
                     <td><?php echo intval($t['variants']); ?></td>
                     <td><code><?php echo esc_html(home_url('/split/' . $t['slug'])); ?></code></td>
-                    <td><a class="button button-small" href="<?php echo esc_url(add_query_arg(['page' => 'gowptracker-split-tests', 'edit' => $t['id']])); ?>">Modifica</a></td>
+                    <td>
+                        <a class="button button-small" href="<?php echo esc_url(add_query_arg(['page' => 'gowptracker-split-tests', 'edit' => $t['id']])); ?>">Modifica</a>
+                        <?php
+                        $delete_url = wp_nonce_url(admin_url('admin.php?page=gowptracker-split-tests&action=delete&test_id=' . $t['id']), 'gowp_delete_split_test_' . $t['id']);
+                        ?>
+                        <a href="<?php echo esc_url($delete_url); ?>" class="button button-small" style="color:#a00;margin-left:4px;" onclick="return confirm('Sei sicuro di voler eliminare questo test? L\'azione è irreversibile.');">Elimina</a>
+                    </td>
                 </tr>
             <?php endforeach; else: ?>
                 <tr><td colspan="6">Nessun test presente</td></tr>
