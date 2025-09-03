@@ -64,6 +64,7 @@ Steps in the roadmap can only be:
 
 **Notes:**
 - La PLP ora viene dedotta automaticamente dal percorso della referrer, senza bisogno del parametro plp.
+- 2025-09-03: La tabella di report è stata riorganizzata in una vista a fisarmonica per raggruppare le campagne sotto ogni PLP, migliorando la leggibilità.
 
 ---
 
@@ -119,8 +120,8 @@ Steps in the roadmap can only be:
 ## 🧪 Split Testing (MVP)
 - [x] Step 1: Database schema (tests, variants, hits) (COMPLETATO 2025-09-02)
 - [x] Step 2: Endpoint `/split/{slug}` (rewrite + handler) (COMPLETATO 2025-09-02)
-- [x] Step 3: Admin UI (create/edit tests, select pages, weights) (COMPLETATO 2025-09-02)
-- [x] Step 4: Sticky assignment via cookie + weighted rotation (COMPLETATO 2025-09-02)
+- [x] Step 3: Admin UI (create/edit/delete tests, select pages, weights) (COMPLETATO 2025-09-03)
+- [x] Step 4: Weighted rotation on every visit (cookie logic removed) (COMPLETATO 2025-09-03)
 - [x] Step 5: Logging hits + UTM propagation (COMPLETATO 2025-09-02)
 - [x] Step 6: Basic reporting (7/30 giorni) + CSV (COMPLETATO 2025-09-02)
 - [ ] Step 7: E2E & security tests (HEAD/bot, slug sconosciuto)
@@ -130,7 +131,7 @@ Steps in the roadmap can only be:
 - Tabelle create via dbDelta in `GoWPTracker::activate_plugin()` e `maybe_upgrade()`:
   - `{prefix}go_split_tests`, `{prefix}go_split_variants`, `{prefix}go_split_hits`.
   - IP salvato in binario, indicizzazione su ts/test/variant.
-  - Endpoint `/split/{slug}` attivo: selezione pesata tra varianti pubblicate, sticky via cookie 30gg, propagazione query/UTM.
-  - Policy bot/crawler: su `/split` NON si blocca HEAD/bot (compatibile con ad/social crawlers). Su `/go` i bot restano bloccati.
-  - Admin UI: submenu “Split Tests”, creazione test con varianti/pesi, lista test con URL.
-  - Report: selettore test + periodo (7/30g), tabella clic per variante, export CSV.
+- Endpoint `/split/{slug}` attivo: selezione pesata tra varianti pubblicate a ogni visita (logica cookie rimossa), propagazione query/UTM.
+- Policy bot/crawler: su `/split` NON si blocca HEAD/bot (compatibile con ad/social crawlers). Su `/go` i bot restano bloccati.
+- Admin UI: submenu “Split Tests”, creazione/modifica/eliminazione test con varianti/pesi, lista test con URL.
+- Report: selettore test + periodo (7/30g), tabella clic per variante, export CSV.

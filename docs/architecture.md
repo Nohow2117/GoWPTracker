@@ -3,7 +3,7 @@
 ## 🎯 Goal
 The purpose of **GoWPTracker** is to provide two core functionalities for WordPress marketers:
 1.  **`/go` Link Tracking**: Server-side tracking of outbound clicks from pre-landing pages (PLPs) to an external e-commerce site.
-2.  **`/split` A/B Testing**: A/B testing for WordPress pages with weighted rotation and sticky visitor assignment.
+2.  **`/split` A/B Testing**: A/B testing for WordPress pages with weighted rotation and selection on every visit.
 
 This document outlines the technical architecture of the plugin.
 
@@ -20,7 +20,7 @@ The plugin follows a modular structure to separate concerns and improve maintain
         - `go-handler.php`: Manages the public-facing `/go` endpoint, including validation, logging, and redirection.
         - `go-admin.php`: Renders the admin reporting page for `/go` clicks, including the data table, chart, and CSV export functionality.
     - `split/`: Contains all files related to the `/split` A/B testing feature.
-        - `split-handler.php`: Manages the public-facing `/split/{slug}` endpoint, including weighted variant selection, cookie assignment, and redirection.
+        - `split-handler.php`: Manages the public-facing `/split/{slug}` endpoint, including weighted variant selection and redirection.
         - `split-admin.php`: A comprehensive module that renders the admin UI for creating, editing, and managing split tests. It also includes the reporting view for test performance.
 
 ---
@@ -52,13 +52,11 @@ The system introduces a controlled **redirect endpoint** (`/go`) inside WordPres
 ## 🔬 Feature 2: `/split` A/B Testing
 
 ### High-Level Overview
-The Split Testing feature introduces a public endpoint `^split/{slug}` that routes users to one of multiple WordPress pages (variants) using weighted rotation and makes the assignment "sticky" via a cookie.
+The Split Testing feature introduces a public endpoint `^split/{slug}` that routes users to one of multiple WordPress pages (variants) using weighted rotation on every visit.
 
 #### Flow
 1. **Request**: A user visits `/split/summer-sale?utm_campaign=promo`.
-2. **Variant Selection**:
-    - If a valid `GoWPTrackerSplit_summer-sale` cookie exists, the user is sent to the previously assigned variant.
-    - Otherwise, a variant is chosen based on the configured weights. A new cookie is set.
+2. **Variant Selection**: A variant is chosen based on the configured weights for the test. This selection happens on every visit.
 3. **Logging & Redirect**: The hit is logged to the database, and the user is redirected (302) to the chosen variant's permalink, with all query parameters propagated.
 
 ### Data Model (Split)
@@ -110,15 +108,9 @@ sequenceDiagram
     participant PLP as Variant Page (WordPress)
 
     User->>Split: GET /split/{slug}?utm_...
-    alt Sticky cookie present and valid
-        Split->>DB: Read test/variant data
-        Split-->>User: 302 to known PLP with UTMs
-    else No cookie or invalid
-        Split->>DB: Read all test variants and weights
-        Split->>Split: Perform weighted selection
-        Split->>Split: Set new sticky cookie
-        Split-->>User: 302 to selected PLP with UTMs
-    end
+    Split->>DB: Read all test variants and weights
+    Split->>Split: Perform weighted selection
+    Split-->>User: 302 to selected PLP with UTMs
     Split->>DB: Log the split hit
     PLP->>User: Variant page loads
 ```

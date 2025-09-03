@@ -12,6 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.6.0] – 2025-09-03
+### Added
+- **Split Test Deletion**: Implemented the ability to delete split tests and their variants directly from the admin UI, including nonce protection.
+- **Go Tracker UI Refactor**: The admin report table for `/go` clicks now groups results by PLP and shows associated campaigns in a collapsible accordion view for improved readability.
+
+### Changed
+- **Split Test Logic**: Removed the "sticky" cookie assignment for variants. Each visit to a `/split` URL now performs a random weighted selection, ensuring traffic is always distributed according to weights.
+
+### Security
+- Added a JavaScript confirmation prompt before deleting a split test to prevent accidental clicks.
+
+---
+
 ## [0.5.1] – 2025-09-02
 ### Added
 - Split Tests Admin UI: varianti dinamiche fino a 10 con pulsanti Aggiungi/Rimuovi.
