@@ -53,7 +53,36 @@ function gowptracker_handle_go_csv_export() {
     }
 }
 add_action('load-toplevel_page_gowptracker-admin', 'gowptracker_handle_go_csv_export');
+add_action('load-toplevel_page_gowptracker-admin', 'gowptracker_handle_go_actions');
 
+
+/**
+ * Renders the admin page for the GO tracker.
+ */
+/**
+ * Handles actions for the GO tracker admin page, like resetting stats.
+ */
+function gowptracker_handle_go_actions() {
+    if (isset($_POST['gowptracker_action']) && $_POST['gowptracker_action'] === 'reset_go_stats') {
+        // Check nonce and user capabilities
+        if (!isset($_POST['gowptracker_reset_go_stats_nonce']) || !wp_verify_nonce($_POST['gowptracker_reset_go_stats_nonce'], 'gowptracker_reset_go_stats_action')) {
+            wp_die('Invalid nonce.');
+        }
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized action.');
+        }
+
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'go_clicks';
+        
+        // Truncate the table
+        $wpdb->query("TRUNCATE TABLE {$table_name}");
+
+        // Redirect to avoid form resubmission
+        wp_redirect(admin_url('admin.php?page=gowptracker-admin&stats_reset=1'));
+        exit;
+    }
+}
 
 /**
  * Renders the admin page for the GO tracker.
@@ -105,9 +134,22 @@ function gowptracker_render_go_admin_page() {
     <div class="wrap">
         <h1>GO Tracker – Clicks (Last 7 Days)</h1>
 
-        <form method="post" style="margin-bottom: 1em;">
-            <input type="submit" name="gowptracker_export_csv" class="button button-primary" value="Export CSV">
-        </form>
+        <div style="margin-bottom: 1em;">
+            <form method="post" style="display: inline-block;">
+                <input type="submit" name="gowptracker_export_csv" class="button button-primary" value="Export CSV">
+            </form>
+            <form method="post" id="gowptracker-reset-form" style="display: inline-block; margin-left: 10px;">
+                <?php wp_nonce_field( 'gowptracker_reset_go_stats_action', 'gowptracker_reset_go_stats_nonce' ); ?>
+                <input type="hidden" name="gowptracker_action" value="reset_go_stats">
+                <input type="submit" name="gowptracker_reset_stats" class="button button-secondary" value="Azzera Statistiche">
+            </form>
+        </div>
+
+        <?php
+        if (isset($_GET['stats_reset']) && $_GET['stats_reset'] == '1') {
+            echo '<div class="notice notice-success is-dismissible"><p>Statistiche dei click azzerate con successo.</p></div>';
+        }
+        ?>
 
         <div id="gowptracker_report">
             <div style="width:60%; float:left; margin-right:2%;">
@@ -152,6 +194,25 @@ function gowptracker_render_go_admin_page() {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     document.addEventListener("DOMContentLoaded", function() {
+        console.log('GoWPTracker: Admin page script loaded.'); // Debug log
+
+        // Reset form confirmation logic
+        const resetForm = document.getElementById('gowptracker-reset-form');
+        if (resetForm) {
+            console.log('GoWPTracker: Reset form found. Attaching listener.'); // Debug log
+            resetForm.addEventListener('submit', function(e) {
+                console.log('GoWPTracker: Reset form submitted.'); // Debug log
+                if (!confirm('Sei sicuro di voler azzerare tutte le statistiche dei click? Questa azione è irreversibile.')) {
+                    console.log('GoWPTracker: Reset cancelled by user.'); // Debug log
+                    e.preventDefault();
+                } else {
+                    console.log('GoWPTracker: Reset confirmed by user. Proceeding with submission.'); // Debug log
+                }
+            });
+        } else {
+            console.error('GoWPTracker: Reset form not found.'); // Debug log
+        }
+
         // Chart.js logic
         var ctx = document.getElementById("gowptracker_chart").getContext("2d");
         new Chart(ctx, {

@@ -93,7 +93,8 @@ Steps in the roadmap can only be:
 ## 🛠️ Step 8 – Reporting Enhancements
 - [x] Add CSV export  (COMPLETATO 2025-09-02: funzione attiva in dashboard)
 - [x] Add chart visualization (clicks per PLP over time)  (COMPLETATO 2025-09-02: grafico a barre in dashboard)
-- [x] Test: Export and chart match DB values  (COMPLETATO 2025-09-02: verifica manuale, export CSV e chart corrispondono ai dati DB)  
+- [x] Test: Export and chart match DB values  (COMPLETATO 2025-09-02: verifica manuale, export CSV e chart corrispondono ai dati DB)
+- [x] Add 'Reset Statistics' button to Go Tracker report (COMPLETATO 2025-09-04: funzione di reset implementata con conferma JS)  
 
 **Notes:**  
 

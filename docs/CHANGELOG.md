@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.0] – 2025-09-04
+### Added
+- **Go Tracker Reset**: Added a button to the Go Tracker admin UI to reset all click statistics, with a confirmation prompt.
+
+---
+
 ## [0.8.0] – 2025-09-04
 ### Added
 - **PLP Parameter Injection**: Automatically adds the source page slug as a `plp` URL parameter to all `/go` redirects to track the click origin.
