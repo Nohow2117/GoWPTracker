@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ---
 
 ## [Unreleased]
+
+## [0.8.0] – 2025-09-04
 ### Added
+- **PLP Parameter Injection**: Automatically adds the source page slug as a `plp` URL parameter to all `/go` redirects to track the click origin.
 - Initial roadmap and documentation files (`README.md`, `architecture.md`, `brief.md`, `roadmap.md`).
 
 ---

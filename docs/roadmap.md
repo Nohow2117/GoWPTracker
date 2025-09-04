@@ -136,3 +136,4 @@ Steps in the roadmap can only be:
 - Admin UI: submenu “Split Tests”, creazione/modifica/eliminazione test con varianti/pesi, lista test con URL.
 - Report: selettore test + periodo (7/30g), tabella clic per variante, export CSV.
 - 2025-09-03: Aggiunta funzione di reset delle statistiche per un test specifico.
+- 2025-09-04: Aggiunta l'iniezione automatica del parametro `plp` (slug della pagina di origine) nei redirect `/go`.

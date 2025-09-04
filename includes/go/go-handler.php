@@ -65,6 +65,25 @@ function gowptracker_handle_go_redirect() {
         wp_die('Destination domain is not allowed.');
     }
 
+    // --- PLP Parameter Injection from Referrer ---
+    if (empty($_GET['plp']) && !empty($_SERVER['HTTP_REFERER'])) {
+        $referrer_url = esc_url_raw($_SERVER['HTTP_REFERER']);
+        $site_host = wp_parse_url(home_url(), PHP_URL_HOST);
+        $referrer_host = wp_parse_url($referrer_url, PHP_URL_HOST);
+
+        // Only proceed if the referrer is from the same site.
+        if ($site_host && $referrer_host && $site_host === $referrer_host) {
+            $post_id = url_to_postid($referrer_url);
+            if ($post_id > 0) {
+                $post = get_post($post_id);
+                if ($post) {
+                    // Inject the slug into the GET parameters to be logged and propagated.
+                    $_GET['plp'] = $post->post_name;
+                }
+            }
+        }
+    }
+
     // --- Logging ---
     global $wpdb;
     $table = $wpdb->prefix . 'go_clicks';
