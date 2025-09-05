@@ -100,6 +100,7 @@ function gowptracker_activate_plugin() {
  *
  * This handles database schema updates between versions.
  */
+
 function gowptracker_maybe_upgrade() {
     $current_version = get_option('gowptracker_version', '0.1.0');
     if (version_compare($current_version, GOWPTRACKER_VERSION, '<')) {

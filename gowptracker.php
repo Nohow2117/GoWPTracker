@@ -19,6 +19,7 @@ define( 'GOWPTRACKER_VERSION', '0.8.0' );
 define( 'GOWPTRACKER_PATH', plugin_dir_path( __FILE__ ) );
 
 // --- Includes ---
+require_once GOWPTRACKER_PATH . 'includes/functions.php';
 require_once GOWPTRACKER_PATH . 'includes/setup.php';
 require_once GOWPTRACKER_PATH . 'includes/go/go-handler.php';
 require_once GOWPTRACKER_PATH . 'includes/go/go-admin.php';
@@ -96,4 +97,34 @@ new GoWPTracker();
 
 // --- Activation & Upgrade Hooks ---
 register_activation_hook( __FILE__, 'gowptracker_activate_plugin' );
-add_action( 'plugins_loaded', 'gowptracker_maybe_upgrade' );
+/**
+ * One-time function to backfill the is_bot flag for existing records.
+ * This ensures that historical data is also filtered correctly.
+ */
+function gowptracker_backfill_bot_data() {
+    // Run this update only once.
+    if (get_option('gowptracker_bot_backfill_done')) {
+        return;
+    }
+
+    global $wpdb;
+    $hits_table = $wpdb->prefix . 'go_split_hits';
+
+    // Get all hits that haven't been checked yet (is_bot = 0)
+    $hits_to_check = $wpdb->get_results("SELECT id, ua, ip FROM {$hits_table} WHERE is_bot = 0");
+
+    if (empty($hits_to_check)) {
+        update_option('gowptracker_bot_backfill_done', true);
+        return;
+    }
+
+    foreach ($hits_to_check as $hit) {
+        if (gowptracker_is_bot($hit->ua, inet_ntop($hit->ip))) {
+            $wpdb->update($hits_table, ['is_bot' => 1], ['id' => $hit->id]);
+        }
+    }
+
+    // Mark the backfill as complete to prevent it from running again.
+    update_option('gowptracker_bot_backfill_done', true);
+}
+add_action('admin_init', 'gowptracker_backfill_bot_data');

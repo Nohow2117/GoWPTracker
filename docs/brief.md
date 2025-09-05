@@ -59,6 +59,7 @@ Questa pagina funziona come un **tornello intelligente**:
 - **Affidabilità**: il log è lato server, quindi meno falsi positivi.  
 - **Sicurezza**: redirect solo verso domini whitelisted (no open redirect).  
 - **Portabilità**: il plugin funziona su qualsiasi sito WordPress che usi pre-landing, non solo su camillabarone.space.  
+- **Backfill manuale bot detection**: l'admin può aggiornare retroattivamente i click storici tramite apposito pulsante nella pagina Split Tests.
 
 ---
 

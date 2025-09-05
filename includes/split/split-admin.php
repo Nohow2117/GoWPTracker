@@ -191,8 +191,8 @@ function gowptracker_render_split_admin_page() {
     }
 
     echo '<div class="wrap">';
-    echo '<h1>Split Tests</h1>';
-
+            echo '<h1>Split Tests</h1>';
+    
     if ($is_edit) {
         // Render Edit Form
         render_split_test_form($is_edit);
@@ -203,6 +203,18 @@ function gowptracker_render_split_admin_page() {
     }
 
     echo '</div>'; // .wrap
+
+    // Sezione per eseguire manualmente il backfill bot detection
+    if (current_user_can('manage_options')) {
+        if (isset($_POST['gowptracker_run_backfill']) && check_admin_referer('gowptracker_run_backfill_action')) {
+            gowptracker_backfill_bot_data();
+            echo '<div class="notice notice-success is-dismissible"><p>Backfill bot detection eseguito. Tutti i click storici sono stati analizzati e aggiornati.</p></div>';
+        }
+        echo '<form method="post" style="margin-top:2em;">';
+        wp_nonce_field('gowptracker_run_backfill_action');
+        echo '<button type="submit" name="gowptracker_run_backfill" class="button button-secondary">Esegui Backfill Bot Detection sui Click Storici</button>';
+        echo '</form>';
+    }
 
     // Render reporting section
     render_split_test_reports();

@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Migliorie e bugfix
+- Aggiunta la possibilità di eseguire il backfill bot detection manualmente dalla pagina Split Tests dell'admin, con feedback visivo di completamento.
+- Migliorata la retrocompatibilità: ora l'admin può aggiornare i click storici in qualsiasi momento.
+- Migliorata la rilevazione dei bot: ora la funzione `gowptracker_is_bot` utilizza una regex costruita con `preg_quote` per evitare falsi negativi dovuti a caratteri speciali nei bot signature.
+- Aggiunto controllo reverse DNS per ulteriore robustezza.
+- Testata la rilevazione su una vasta gamma di user agent reali (Googlebot, AhrefsBot, GPTBot, Twitterbot, Facebook, LinkedIn, ecc.) e su click reali da dispositivi mobile/desktop.
+- Rimossi tutti i log di debug temporanei dal codice per un deploy pulito.
+- Aggiornata la documentazione interna (README) con una sezione dedicata alla logica di bot detection.
+
+
 ## [0.9.0] – 2025-09-04
 ### Added
 - **Go Tracker Reset**: Added a button to the Go Tracker admin UI to reset all click statistics, with a confirmation prompt.
