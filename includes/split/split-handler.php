@@ -9,6 +9,33 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * It performs weighted rotation to a variant (WP Page), logs the hit, and propagates query parameters.
  */
+/**
+ * Checks if a user agent string belongs to a known bot/crawler.
+ * This function is intentionally kept simple and can be expanded.
+ *
+ * @param string $user_agent The user agent string to check.
+ * @return bool True if it's a bot, false otherwise.
+ */
+function gowptracker_is_bot($user_agent) {
+    if (empty($user_agent)) {
+        return false;
+    }
+    // A non-exhaustive list of common bot/crawler user agent substrings.
+    $bot_signatures = [
+        // Search Engines
+        'Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider', 'YandexBot',
+        // Social Media & Ads
+        'facebookexternalhit', 'LinkedInBot', 'Pinterest', 'Twitterbot', 'Google-Ads-Bot',
+        // Monitoring & SEO Tools
+        'UptimeRobot', 'Site24x7', 'Pingdom', 'AhrefsBot', 'SemrushBot', 'DotBot',
+        'MJ12bot', 'MegaIndex', 'SEOkicks', 'MojeekBot', 'linkdexbot',
+        // Generic & Others
+        'bot', 'crawl', 'spider', 'slurp', 'scan', 'python-requests', 'curl', 'wget'
+    ];
+    $pattern = '/' . implode('|', $bot_signatures) . '/i';
+    return preg_match($pattern, $user_agent) > 0;
+}
+
 function gowptracker_handle_split_redirect() {
     $slug = get_query_var('gowptracker_split');
     if (empty($slug)) {
@@ -118,6 +145,9 @@ function gowptracker_handle_split_redirect() {
         }
     }
 
+    // Bot detection
+    $is_bot = gowptracker_is_bot($user_agent);
+
     $wpdb->insert(
         $split_hits_table,
         [
@@ -131,8 +161,9 @@ function gowptracker_handle_split_redirect() {
             'geo_country' => $geo_country,
             'geo_city'    => $geo_city,
             'device_type' => $device_type,
+            'is_bot'      => $is_bot ? 1 : 0,
         ],
-        ['%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s']
+        ['%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d']
     );
 
     // Add cache-busting headers to prevent browser caching of the 302 redirect.

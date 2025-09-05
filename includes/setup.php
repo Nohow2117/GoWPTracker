@@ -82,6 +82,7 @@ function gowptracker_activate_plugin() {
         geo_country VARCHAR(100) NULL,
         geo_city VARCHAR(100) NULL,
         device_type VARCHAR(50) NULL,
+        is_bot TINYINT(1) NOT NULL DEFAULT 0,
         PRIMARY KEY (id),
         KEY idx_ts (ts),
         KEY idx_test (test_slug),

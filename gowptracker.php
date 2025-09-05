@@ -2,7 +2,7 @@
 /*
 Plugin Name: GoWPTracker
 Description: Server-side tracking of outbound clicks (GO) and A/B split testing (SPLIT) for WordPress.
-Version: 0.7.0
+Version: 0.8.0
 Author: Nohow2117
 Author URI: https://nohow2117.com/
 License: GPLv2 or later
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // --- Constants ---
-define( 'GOWPTRACKER_VERSION', '0.7.0' );
+define( 'GOWPTRACKER_VERSION', '0.8.0' );
 define( 'GOWPTRACKER_PATH', plugin_dir_path( __FILE__ ) );
 
 // --- Includes ---

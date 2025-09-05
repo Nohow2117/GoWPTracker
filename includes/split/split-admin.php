@@ -350,6 +350,7 @@ function render_split_test_reports() {
                 printf('<option value="%d" %s>%d giorni</option>', $opt, selected($selected_days, $opt, false), $opt);
             } ?>
         </select></label>
+        <label style="margin-right:8px;"><input type="checkbox" name="exclude_bots" value="1" <?php checked(isset($_GET['exclude_bots'])); ?>> Escludi Bot/Crawler</label>
         <button class="button">Aggiorna Report</button>
     </form>
 
@@ -364,8 +365,10 @@ function render_split_test_reports() {
         ), ARRAY_A);
         $variant_to_post = wp_list_pluck($map, 'post_id', 'variant_id');
 
+        $exclude_bots_sql = isset($_GET['exclude_bots']) ? " AND is_bot = 0" : "";
+
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT variant_id, COUNT(*) as clicks FROM $split_hits_table WHERE test_slug = %s AND ts >= %s GROUP BY variant_id",
+            "SELECT variant_id, COUNT(*) as clicks FROM $split_hits_table WHERE test_slug = %s AND ts >= %s" . $exclude_bots_sql . " GROUP BY variant_id",
             $selected_slug, $since
         ), ARRAY_A);
     ?>
@@ -438,8 +441,10 @@ function render_split_test_recent_hits_report() {
     ), ARRAY_A);
     $variant_to_post = wp_list_pluck($map, 'post_id', 'variant_id');
 
+    $exclude_bots_sql = isset($_GET['exclude_bots']) ? " AND is_bot = 0" : "";
+
     $recent_hits = $wpdb->get_results($wpdb->prepare(
-        "SELECT * FROM {$hits_table} WHERE test_slug = %s ORDER BY ts DESC LIMIT 10",
+        "SELECT * FROM {$hits_table} WHERE test_slug = %s" . $exclude_bots_sql . " ORDER BY ts DESC LIMIT 10",
         $selected_slug
     ), ARRAY_A);
     ?>
