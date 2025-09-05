@@ -413,7 +413,14 @@ function render_split_test_reports() {
  */
 function render_split_test_recent_hits_report() {
     global $wpdb;
-    $selected_slug = isset($_GET['report_slug']) ? sanitize_title($_GET['report_slug']) : '';
+    $tests_table = $wpdb->prefix . 'go_split_tests';
+
+    // Get the default slug if not specified in URL, to match the main report's behavior
+    if (isset($_GET['report_slug'])) {
+        $selected_slug = sanitize_title($_GET['report_slug']);
+    } else {
+        $selected_slug = $wpdb->get_var("SELECT slug FROM $tests_table ORDER BY id DESC LIMIT 1");
+    }
 
     if (empty($selected_slug)) {
         // Don't render if no test is selected
