@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [0.7.0] – 2025-09-03
 ### Added
 - **Reset Statistics**: Added a button to the split test report UI to reset the click statistics for a specific test.
+- **Recent Hits Log**: Added a "Recent Hits" log to the Split Test admin page, showing the last 10 clicks in real-time.
+- **GeoIP Lookup**: Implemented GeoIP lookup and device type detection for split test hits.
+- **Database Schema Update**: The database schema for `go_split_hits` was updated to store geo-location and device data.
 
 ### Fixed
 - **Split Test Caching**: Resolved a browser caching issue on 302 redirects that prevented correct variant randomization on subsequent visits by adding cache-busting headers.

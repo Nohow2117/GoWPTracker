@@ -13,6 +13,7 @@ Permettere di creare uno o più “split test” con un URL unico per ciascun te
 - Propagazione dei parametri UTM e query string verso la PLP.
 - Logging degli hit del test (test, variante, timestamp, IP binario, UA, referrer).
 - Report in admin: click per test/variante, esportazione CSV e grafico.
+- Recent Hits Log: visualizzazione degli ultimi 10 click per il test selezionato.
 
 ---
 

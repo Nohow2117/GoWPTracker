@@ -79,6 +79,9 @@ function gowptracker_activate_plugin() {
         ip VARBINARY(16) NOT NULL,
         ua TEXT NULL,
         referrer TEXT NULL,
+        geo_country VARCHAR(100) NULL,
+        geo_city VARCHAR(100) NULL,
+        device_type VARCHAR(50) NULL,
         PRIMARY KEY (id),
         KEY idx_ts (ts),
         KEY idx_test (test_slug),
@@ -97,7 +100,8 @@ function gowptracker_activate_plugin() {
  * This handles database schema updates between versions.
  */
 function gowptracker_maybe_upgrade() {
-    if (get_option('gowptracker_version') !== GOWPTRACKER_VERSION) {
-        gowptracker_activate_plugin();
+    $current_version = get_option('gowptracker_version', '0.1.0');
+    if (version_compare($current_version, GOWPTRACKER_VERSION, '<')) {
+        gowptracker_setup_db();
     }
 }

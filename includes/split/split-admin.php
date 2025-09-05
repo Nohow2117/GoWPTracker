@@ -207,6 +207,9 @@ function gowptracker_render_split_admin_page() {
     // Render reporting section
     render_split_test_reports();
 
+    // Render recent hits report
+    render_split_test_recent_hits_report();
+
     // Render JS for form interactions
     render_split_test_js();
 }
@@ -405,6 +408,80 @@ function render_split_test_reports() {
 /**
  * Renders the inline JavaScript for the admin form.
  */
+/**
+ * Renders the report of the last 10 hits for the selected split test.
+ */
+function render_split_test_recent_hits_report() {
+    global $wpdb;
+    $tests_table = $wpdb->prefix . 'go_split_tests';
+
+    // Get the default slug if not specified in URL, to match the main report's behavior
+    if (isset($_GET['report_slug'])) {
+        $selected_slug = sanitize_title($_GET['report_slug']);
+    } else {
+        $selected_slug = $wpdb->get_var("SELECT slug FROM $tests_table ORDER BY id DESC LIMIT 1");
+    }
+
+    if (empty($selected_slug)) {
+        // Don't render if no test is selected
+        return;
+    }
+
+    $hits_table = $wpdb->prefix . 'go_split_hits';
+    $tests_table = $wpdb->prefix . 'go_split_tests';
+    $variants_table = $wpdb->prefix . 'go_split_variants';
+
+    // Pre-fetch variant to post ID mapping for the selected test
+    $map = $wpdb->get_results($wpdb->prepare(
+        "SELECT v.id as variant_id, v.post_id FROM {$variants_table} v JOIN {$tests_table} t ON t.id = v.test_id WHERE t.slug = %s",
+        $selected_slug
+    ), ARRAY_A);
+    $variant_to_post = wp_list_pluck($map, 'post_id', 'variant_id');
+
+    $recent_hits = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM {$hits_table} WHERE test_slug = %s ORDER BY ts DESC LIMIT 10",
+        $selected_slug
+    ), ARRAY_A);
+    ?>
+    <hr style="margin:2em 0;">
+    <h2 class="title">Ultimi 10 Click</h2>
+    <table class="widefat">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Pagina Variante</th>
+                <th>IP / Geo</th>
+                <th>Dispositivo</th>
+                <th>User Agent</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if ($recent_hits): foreach ($recent_hits as $hit): ?>
+                <?php
+                $variant_id = intval($hit['variant_id']);
+                $post_id = $variant_to_post[$variant_id] ?? 0;
+                $post_title = $post_id ? get_the_title($post_id) : '<em>Sconosciuto</em>';
+                $ip_address = isset($hit['ip']) ? inet_ntop($hit['ip']) : 'N/A';
+                $geo_info = trim($hit['geo_city'] . ', ' . $hit['geo_country'], ', ');
+                ?>
+                <tr>
+                    <td><?php echo esc_html($hit['ts']); ?></td>
+                    <td><?php echo esc_html($post_title); ?></td>
+                    <td>
+                        <?php echo esc_html($ip_address); ?><br>
+                        <small><?php echo esc_html($geo_info); ?></small>
+                    </td>
+                    <td><?php echo esc_html(ucfirst($hit['device_type'])); ?></td>
+                    <td style="font-size:0.9em; color:#555;"><?php echo esc_html($hit['ua']); ?></td>
+                </tr>
+            <?php endforeach; else: ?>
+                <tr><td colspan="5">Nessun click registrato per questo test.</td></tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+    <?php
+}
+
 function render_split_test_js() {
     ?>
 <script>
